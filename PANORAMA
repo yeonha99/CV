@@ -1,0 +1,108 @@
+#include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/features2d.hpp>
+#include <vector>
+using namespace cv;
+using namespace std;
+//void myRansac(vector<KeyPoint> keypoints1, vector<KeyPoint>  keypoints2,std::vector<DMatch> good_matches ,std::vector< std::vector<DMatch> > knn_matches) {
+//
+//	const float treshold = 20.f;//원래 0.7이였음
+//	for (size_t i = 0; i < knn_matches.size(); i++)
+//	{
+//
+//		if (knn_matches[i][0].distance < treshold * knn_matches[i][1].distance)
+//		{
+//			good_matches.push_back(knn_matches[i][0]);
+//		}
+//	}
+//	//-- D
+//
+//	int count = 0;
+//	for (size_t i = 0; i < good_matches.size(); i++)
+//	{
+//		if (keypoints1[i].pt.x == good_matches[i].queryIdx) {
+//			queryIdy[i] = keypoints1[i].pt.y;
+//			traindy[i] = keypoints1[2].pt.y;
+//			count++;
+//			cout << count << endl;
+//		}
+//	}
+//
+//}
+int main() {
+	Mat image1 = imread("img1.jpg", 1);
+	resize(image1, image1, cv::Size(600, 600), 0, 0);
+	Mat image2 = imread("img2.jpg", 1);
+	resize(image2, image2, cv::Size(600, 600), 0, 0);
+	Mat gray1;
+	Mat gray2;
+	std::vector<KeyPoint> keypoints1, keypoints2;
+	Mat descriptors1, descriptors2;
+	cvtColor(image1, gray1, COLOR_RGB2GRAY);
+	cvtColor(image2, gray2, COLOR_RGB2GRAY);
+	Ptr<cv::xfeatures2d::SIFT> sift = cv::xfeatures2d::SIFT::create();
+	sift->detectAndCompute(gray1, Mat(), keypoints1, descriptors1);
+	sift->detectAndCompute(gray2, Mat(), keypoints2, descriptors2);
+	Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
+	std::vector< std::vector<DMatch> > knn_matches;
+	matcher->knnMatch(descriptors1, descriptors2, knn_matches, 2);
+	const float ratio_thresh = 0.7f;//원래 0.7이였음
+	std::vector<DMatch> good_matches;
+	
+	for (size_t i = 0; i < knn_matches.size(); i++)
+	{
+	
+		if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance)
+		{
+			good_matches.push_back(knn_matches[i][0]);
+		}
+	}
+	//-- Draw matches
+	Mat img_matches;
+	drawMatches(image1, keypoints1, image2, keypoints2, good_matches, img_matches, Scalar::all(-1),
+		Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+	//-- Show detected matches
+
+	std::vector< Point2f > obj;
+	std::vector< Point2f > scene;
+
+	for (int i = 0; i < good_matches.size(); i++)
+	{
+		//--Get the keypoints from the good matches
+		obj.push_back(keypoints1[good_matches[i].queryIdx].pt);
+		scene.push_back(keypoints2[good_matches[i].trainIdx].pt);
+	}
+
+	Mat H = findHomography(obj, scene, RANSAC);
+
+
+	Mat result;
+
+	warpPerspective(image1, result, H, cv::Size(image1.cols + image2.cols, image1.rows+image2.cols));
+	cv::imshow("result before", result);
+	Mat half(result, cv::Rect(0, 0, image1.cols, image1.rows));
+	cv::imshow("image2 before", image2);
+	image2.copyTo(half);
+	cv::imshow("image2", image2);
+	std::vector<cv::Point> nonBlackList;
+	nonBlackList.reserve(result.rows * result.cols);
+	for (int j = 0; j < result.rows; ++j)
+		for (int i = 0; i < result.cols; ++i)
+		{
+			// if not black: add to the list
+			if (result.at<cv::Vec3b>(j, i) != cv::Vec3b(0, 0, 0))
+			{
+				nonBlackList.push_back(cv::Point(i, j));
+			}
+		}
+
+	// create bounding rect around those points
+	cv::Rect bb = cv::boundingRect(nonBlackList);
+
+	// display result and save it
+	cv::imshow("Reult", result(bb));
+	cv::imwrite("./Result.jpg", result(bb));
+	imshow("Good Matches", img_matches);
+	waitKey();
+	return 0;
+}
