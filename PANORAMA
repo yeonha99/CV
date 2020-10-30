@@ -15,7 +15,7 @@ Mat myRansac_homography(vector< Point2f > obj, vector< Point2f > scene) {
 
 	int best;
 	int count = 0;
-	float thresh = 6;
+	float thresh = 13;
 	Mat H(Size(3, 3), CV_32F);
 	vector< Point2f >inliner_max1;
 	vector< Point2f >inliner_max2;
@@ -117,25 +117,25 @@ Mat myRansac_homography(vector< Point2f > obj, vector< Point2f > scene) {
 	int r = 0;
 	for (int i = 0; i < inliners_num ; i++) {
 		
-		A.at<float>(r, 0) = inliner_max1[i].x;
-		A.at<float>(r, 1) = inliner_max1[i].y;
+		A.at<float>(r, 0) = inliner_max2[i].x;
+		A.at<float>(r, 1) = inliner_max2[i].y;
 		A.at<float>(r, 2) = 1;
 		A.at<float>(r, 3) = 0;
 		A.at<float>(r, 4) = 0;
 		A.at<float>(r, 5) = 0;
-		A.at<float>(r, 6) = -inliner_max1[i].x* inliner_max2[i].x;
-		A.at<float>(r, 7) = -inliner_max1[i].y * inliner_max2[i].x;
-		b.at<float>(r, 0) = inliner_max2[i].x;
+		A.at<float>(r, 6) = -(inliner_max2[i].x* inliner_max1[i].x);
+		A.at<float>(r, 7) = -(inliner_max2[i].y * inliner_max1[i].x);
+		b.at<float>(r, 0) = inliner_max1[i].x;
 		r++;
 		A.at<float>(r, 0) = 0;
 		A.at<float>(r, 1) = 0;
 		A.at<float>(r, 2) = 0;
-		A.at<float>(r, 3) = inliner_max1[i].x;
-		A.at<float>(r, 4) = inliner_max1[i].y;
+		A.at<float>(r, 3) = inliner_max2[i].x;
+		A.at<float>(r, 4) = inliner_max2[i].y;
 		A.at<float>(r, 5) = 1;
-		A.at<float>(r, 6) = -inliner_max1[i].x * inliner_max2[i].y;
-		A.at<float>(r, 7) = -inliner_max1[i].y * inliner_max2[i].y;
-		b.at<float>(r, 0) = inliner_max2[i].y;
+		A.at<float>(r, 6) = -(inliner_max2[i].x * inliner_max1[i].y);
+		A.at<float>(r, 7) = -(inliner_max2[i].y * inliner_max1[i].y);
+		b.at<float>(r, 0) = inliner_max1[i].y;
 		r++;
 	
 	}
@@ -160,6 +160,7 @@ Mat myRansac_homography(vector< Point2f > obj, vector< Point2f > scene) {
 	return H;
 }
 void warp(Mat input, Mat output, Mat H) {
+	resize(input, input, Size(1200, 600));
 	Mat sol(Size(1, 3), CV_32F);
 	Mat xy1(Size(1,3), CV_32F);
 	Mat xy1_inv(Size(1, 3), CV_32F);
@@ -193,7 +194,7 @@ void warp(Mat input, Mat output, Mat H) {
 			xy1_inv = H.inv() * xy1;
 			row = int(xy1_inv.at<float>(0, 0) / xy1_inv.at<float>(2, 0));
 			col = int(xy1_inv.at<float>(1, 0) / xy1_inv.at<float>(2, 0));
-			//forward warp 과정
+			//inverse warp 과정
 			if (0 < row && row < input.rows) {
 				if (0 < col && col < input.cols) {
 					output.at<Vec3b>(i, j) = input.at<Vec3b>(row, col);
@@ -203,6 +204,7 @@ void warp(Mat input, Mat output, Mat H) {
 		}
 	}
 	cv::imshow("inverse", output);
+
 	
 }
 int main() {
@@ -242,8 +244,8 @@ int main() {
 		Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 	//-- Show detected matches
 
-	vector< Point2f > obj,obj_inv;
-	vector< Point2f > scene,scene_inv;
+	vector< Point2f > obj;
+	vector< Point2f > scene;
 
 	for (int i = 0; i < good_matches.size(); i++)
 	{
@@ -251,23 +253,32 @@ int main() {
 		obj.push_back(keypoints1[good_matches[i].queryIdx].pt);
 		scene.push_back(keypoints2[good_matches[i].trainIdx].pt);
 	}
-	obj_inv = scene;
-	scene_inv = obj;
 
 
 	Mat H = myRansac_homography(obj, scene);
-	Mat H_inv = myRansac_homography(obj_inv, scene_inv);
+
 
 
 	Mat result(Size(image1.cols + image2.cols, image1.rows), CV_8UC3);
 
-	warp(image1, result, H);
-	//warpPerspective(image1, result, H, cv::Size(image1.cols + image2.cols, image1.rows+image2.cols));
-	//cv::imshow("result before", result);
-	Mat half(result, cv::Rect(0, 0, image2.cols, image2.rows));
-	cv::imshow("image2 before", half);
-	image2.copyTo(half);
-	cv::imshow("half", half);
+	//Mat result;
+	//warp(image1, result, H);
+	warp(image2, result, H);
+
+	//imshow("result", result);
+	imshow("result", result);
+	//Mat half(result, cv::Rect(0, 0, image1.cols, image1.rows));
+	Mat half(result, cv::Rect(0, 0, 600, 600));
+
+	image1.copyTo(half);
+
+	imshow("half", half);
+	////warpPerspective(image1, result, H, cv::Size(image1.cols + image2.cols, image1.rows));
+	////cv::imshow("result before", result);
+	//Mat half(result, cv::Rect(0, 0, image2.cols, image2.rows));
+	//cv::imshow("image2 before", half);
+	//image2.copyTo(half);
+	//cv::imshow("half", half);
 	std::vector<cv::Point> nonBlackList;
 	nonBlackList.reserve(result.rows * result.cols);
 	for (int j = 0; j < result.rows; ++j)
@@ -284,10 +295,10 @@ int main() {
 	cv::Rect bb = cv::boundingRect(nonBlackList);
 
 
-	
+	//
 	cv::imshow("Reult", result(bb));
-	cv::imwrite("./Result.jpg", result(bb));
-	imshow("Good Matches", img_matches);
+	//cv::imwrite("./Result.jpg", result(bb));
+	//imshow("Good Matches", img_matches);
 	waitKey();
 	return 0;
 }
