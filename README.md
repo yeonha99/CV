@@ -7,8 +7,7 @@ HW2_1는 HoG (histogram of oriented gradients) 특징 추출 (simplified version
 ③ Bounding box 내부에서 histogram의 magnitude와 gradient를 구하고 이를 영상으로
 시각화
 A. Magnitude는 gray scale 영상으로 도시.
-B. Gradient는 0~359도의 방향에 따라 HSL 컬러공간에서 (방향각도, 80, 60)으로
-표현하고 RGB로 변환, https://htmlcolorcodes.com/ 참고).
+B. Gradient는 0~359도의 방향에 따라 HSL 컬러공간에서 (방향각도, 80, 60)으로 표현하고 RGB로 변환).
 ④ Gradient 방향각도를 매 30도 단위로 양자화하여 (-15~15, 15~45, 45~75, …)
 히스토그램을 만들고 이를 12차원의 벡터로 표현한 후 정규화 (norm = 1) 하여 제시.
 ⑤ 사람-사람, 사람-자동차 등 벡터의 거리를 이용한 매칭을 수행하고 HoG 특징이 물체
