@@ -2,20 +2,12 @@
 2020년 2학기에 들은 컴퓨터비전 과제 및 프로젝트 소스코드입니다.
 
 HW2_1는 HoG (histogram of oriented gradients) 특징 추출 (simplified version)를 LOWLEVEL로 구현 한 것입니다.
-① https://www.youtube.com/watch?v=_N7K9QPGjqQ 시청 (HoG를 이용한 보행자 검출)
-② 위 비디오처럼 정지 영상에서 객체를 포함하는 bounding box를 UI로 지정.
-③ Bounding box 내부에서 histogram의 magnitude와 gradient를 구하고 이를 영상으로
-시각화
-A. Magnitude는 gray scale 영상으로 도시.
-B. Gradient는 0~359도의 방향에 따라 HSL 컬러공간에서 (방향각도, 80, 60)으로 표현하고 RGB로 변환).
-④ Gradient 방향각도를 매 30도 단위로 양자화하여 (-15~15, 15~45, 45~75, …)
-히스토그램을 만들고 이를 12차원의 벡터로 표현한 후 정규화 (norm = 1) 하여 제시.
-⑤ 사람-사람, 사람-자동차 등 벡터의 거리를 이용한 매칭을 수행하고 HoG 특징이 물체
+Magnitude는 gray scale 영상으로 도시.
+Gradient는 0~359도의 방향에 따라 HSL 컬러공간에서 (방향각도, 80, 60)으로 표현하고 RGB로 변환).
+Gradient 방향각도를 매 30도 단위로 양자화하여 (-15~15, 15~45, 45~75, …) 히스토그램을 만들고 이를 12차원의 벡터로 표현한 후 정규화 (norm = 1) 하여 제시.
+사람-사람, 사람-자동차 등 벡터의 거리를 이용한 매칭을 수행하고 HoG 특징이 물체
 인식에 사용될 수 있는 유용한 특징임을 보인다.
- (참고) Original HoG 특징 검출은 bounding box를 작은 블록으로 나누고 블록 내부에서
-각각 histogram을 구하지만 (Histogram of Oriented Gradients 구글검색) 본 과제는
-bounding box 전체를 하나의 블록으로 본다. 따라서 original HoG와 같은 성능을
-보이지는 않지만 유용성 검증은 가능함.
+(참고) Original HoG 특징 검출은 bounding box를 작은 블록으로 나누고 블록 내부에서 각각 histogram을 구하지만 (Histogram of Oriented Gradients 구글검색) 본 과제는 bounding box 전체를 하나의 블록으로 본다. 따라서 original HoG와 같은 성능을 보이지는 않지만 유용성 검증은 가능함.
 
 HW2_2는 Harris corner 검출을 LOWLEVEL로 구현 한 것입니다.
 ① 수업 슬라이드에서 배운 step-by-step 절차를 구현하고 중간 결과를 보이시오.
